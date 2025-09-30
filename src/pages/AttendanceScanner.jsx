@@ -169,3 +169,4 @@ const AttendanceScanner = () => {
 };
 
 export default AttendanceScanner;
+      
