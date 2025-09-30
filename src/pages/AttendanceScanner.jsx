@@ -13,7 +13,9 @@ import {
 import { db } from "../firebase";
 
 const AttendanceScanner = () => {
-  const [history, setHistory] = useState([]); // All scanned users
+  const [history, setHistory] = useState([]);
+  const [manualId, setManualId] = useState("");
+  const [manualStatus, setManualStatus] = useState("Sign-In");
   const scannerRef = useRef(null);
   const lastScannedRef = useRef("");
 
@@ -22,20 +24,13 @@ const AttendanceScanner = () => {
     return () => stopScanner();
   }, []);
 
-  const handleScanSuccess = async (decodedText) => {
-    if (!decodedText) return;
-
-    const scannedId = decodedText.replace(/\s/g, "").trim().toLowerCase();
-
-    // Avoid scanning same ID twice in a row
-    if (scannedId === lastScannedRef.current) return;
-    lastScannedRef.current = scannedId;
+  const markAttendance = async (id, statusOption) => {
+    const scannedId = id.replace(/\s/g, "").trim().toLowerCase();
 
     try {
-      // Adjust field name based on your Firestore document
       const q = query(
         collection(db, "users"),
-        where("generatedIdLowercase", "==", scannedId) // Make sure this field exists in Firebase
+        where("generatedIdLowercase", "==", scannedId)
       );
       const querySnap = await getDocs(q);
 
@@ -50,44 +45,59 @@ const AttendanceScanner = () => {
       } else {
         const studentDoc = querySnap.docs[0];
         const studentData = studentDoc.data();
-
-        const now = new Date();
-        const minutes = now.getHours() * 60 + now.getMinutes();
-
-        let currentStatus = "";
         let updateData = {};
+        const now = new Date();
 
-        if (minutes < 570) {
-          currentStatus = "Sign-In";
-          updateData = { signIn: serverTimestamp() };
-        } else if (minutes >= 960) {
-          currentStatus = "Sign-Out";
-          updateData = { signOut: serverTimestamp() };
-        } else {
-          if (!studentData.breaks) studentData.breaks = [];
-          const lastBreak = studentData.breaks[studentData.breaks.length - 1];
-          if (!lastBreak || lastBreak.type === "in") {
-            currentStatus = "Break Out";
+        switch (statusOption) {
+          case "Sign-In":
+            updateData = { signIn: serverTimestamp() };
+            break;
+          case "Sign-Out":
+            updateData = { signOut: serverTimestamp() };
+            break;
+          case "Break Out":
+            if (!studentData.breaks) studentData.breaks = [];
             updateData = { breaks: arrayUnion({ type: "out", time: serverTimestamp() }) };
-          } else {
-            currentStatus = "Break In";
+            break;
+          case "Break In":
+            if (!studentData.breaks) studentData.breaks = [];
             updateData = { breaks: arrayUnion({ type: "in", time: serverTimestamp() }) };
-          }
+            break;
+          default:
+            break;
         }
 
         await updateDoc(doc(db, "users", studentDoc.id), updateData);
 
         newEntry = {
           ...studentData,
-          status: currentStatus,
+          status: statusOption,
           time: now.toLocaleTimeString(),
         };
       }
 
       setHistory((prev) => [newEntry, ...prev]);
+      setManualId(""); // clear input
     } catch (err) {
-      console.error("Scan error:", err);
+      console.error("Attendance error:", err);
     }
+  };
+
+  const handleScanSuccess = async (decodedText) => {
+    if (!decodedText) return;
+    const scannedId = decodedText.replace(/\s/g, "").trim().toLowerCase();
+    if (scannedId === lastScannedRef.current) return;
+    lastScannedRef.current = scannedId;
+
+    // Auto determine status based on time
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    let statusOption = "Sign-In";
+    if (minutes < 570) statusOption = "Sign-In";
+    else if (minutes >= 960) statusOption = "Sign-Out";
+    else statusOption = "Break Out/In";
+
+    await markAttendance(scannedId, statusOption === "Break Out/In" ? "Break Out" : statusOption);
   };
 
   const startScanner = async () => {
@@ -99,11 +109,7 @@ const AttendanceScanner = () => {
     try {
       await scanner.start(
         { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: 300, // fixed square box
-          disableFlip: false,
-        },
+        { fps: 10, qrbox: 300, disableFlip: false },
         handleScanSuccess
       );
     } catch (err) {
@@ -133,13 +139,37 @@ const AttendanceScanner = () => {
         style={{
           width: "90vw",
           maxWidth: 360,
-          height: 360, // fixed height to prevent overlay
+          height: "90vw",
+          maxHeight: 360,
           border: "2px solid #ccc",
           borderRadius: 10,
         }}
       ></div>
 
-      {/* Table of scanned users */}
+      {/* Manual input */}
+      <div style={{ marginTop: 15, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        <input
+          type="text"
+          placeholder="Enter ID manually"
+          value={manualId}
+          onChange={(e) => setManualId(e.target.value)}
+          style={{ padding: 8, width: 200, borderRadius: 5, border: "1px solid #ccc" }}
+        />
+        <select value={manualStatus} onChange={(e) => setManualStatus(e.target.value)} style={{ padding: 8, borderRadius: 5 }}>
+          <option>Sign-In</option>
+          <option>Sign-Out</option>
+          <option>Break Out</option>
+          <option>Break In</option>
+        </select>
+        <button
+          onClick={() => manualId && markAttendance(manualId, manualStatus)}
+          style={{ padding: "8px 16px", borderRadius: 5, backgroundColor: "#28a745", color: "white", border: "none", cursor: "pointer" }}
+        >
+          Submit
+        </button>
+      </div>
+
+      {/* Table */}
       <div style={{ marginTop: 20, width: "95%", maxWidth: 400, maxHeight: 300, overflowY: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
