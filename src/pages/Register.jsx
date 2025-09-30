@@ -127,8 +127,8 @@ const Register = () => {
     <div style={styles.container}>
       {/* Floating Volunteer Button */}
       <div style={styles.floatingButton}>
-        <button onClick={() => navigate("/volunteer-register")} style={styles.button}>
-          Register Volunteer
+        <button onClick={() => navigate("/")} style={styles.Homebutton}>
+          Home
         </button>
       </div>
 
@@ -317,12 +317,12 @@ const styles = {
     right: 10,
     zIndex: 999,
   },
-  button: {
-    padding: "8px 16px",
+  Homebutton: {
+    padding: "5px 16px",
     fontSize: 14,
     fontWeight: 600,
-    backgroundColor: "#2980b9",
-    color: "#fff",
+    backgroundColor: "#46464628",
+    color: "#000000ff",
     border: "none",
     borderRadius: 8,
     cursor: "pointer",
@@ -388,7 +388,7 @@ const Header = () => (
         <h1 style={headerStyles.mainTitle}>Christ Experience</h1>
         <h2 style={headerStyles.subTitle}>Christeen Retreat 2025</h2>
         <p style={headerStyles.textItalic}>By Marian Ministry</p>
-        <p style={headerStyles.text}>(December 20th to 25th)</p>
+        <p style={headerStyles.text}>(December 28th to 30th)</p>
       </div>
       <div style={headerStyles.logoGroup}>
         <img src={Logo} alt="Logo" style={headerStyles.logo} />
