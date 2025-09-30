@@ -13,8 +13,7 @@ import {
 import { db } from "../firebase";
 
 const AttendanceScanner = () => {
-  const [history, setHistory] = useState([]); // Scanned users history
-  const [notification, setNotification] = useState(""); // For "User not found"
+  const [history, setHistory] = useState([]); // All scanned users (found or not)
   const scannerRef = useRef(null);
   const lastScannedRef = useRef("");
 
@@ -25,57 +24,67 @@ const AttendanceScanner = () => {
 
   const handleScanSuccess = async (decodedText) => {
     if (!decodedText) return;
-    const trimmedData = decodedText.trim();
 
-    if (trimmedData === lastScannedRef.current) return; // prevent duplicate scan
-    lastScannedRef.current = trimmedData;
+    // Normalize QR string
+    const scannedId = decodedText.replace(/\s/g, '').trim().toLowerCase();
+
+    // Avoid scanning the same ID twice in a row
+    if (scannedId === lastScannedRef.current) return;
+    lastScannedRef.current = scannedId;
 
     try {
-      const q = query(collection(db, "users"), where("generatedId", "==", trimmedData));
+      const q = query(collection(db, "users"), where("generatedIdLowercase", "==", scannedId));
       const querySnap = await getDocs(q);
 
+      let newEntry;
       if (querySnap.empty) {
         // User not found
-        setNotification(`User with ID "${trimmedData}" not found`);
-        setTimeout(() => setNotification(""), 3000); // hide after 3 sec
-        return;
-      }
-
-      const studentDoc = querySnap.docs[0];
-      const studentData = studentDoc.data();
-
-      // Determine attendance status
-      const now = new Date();
-      const minutes = now.getHours() * 60 + now.getMinutes();
-
-      let currentStatus = "";
-      let updateData = {};
-
-      if (minutes < 570) {
-        currentStatus = "Sign-In";
-        updateData = { signIn: serverTimestamp() };
-      } else if (minutes >= 960) {
-        currentStatus = "Sign-Out";
-        updateData = { signOut: serverTimestamp() };
+        newEntry = {
+          participantName: "User not found",
+          generatedId: scannedId,
+          status: "-",
+          time: new Date().toLocaleTimeString(),
+        };
       } else {
-        if (!studentData.breaks) studentData.breaks = [];
-        const lastBreak = studentData.breaks[studentData.breaks.length - 1];
-        if (!lastBreak || lastBreak.type === "in") {
-          currentStatus = "Break Out";
-          updateData = { breaks: arrayUnion({ type: "out", time: serverTimestamp() }) };
+        const studentDoc = querySnap.docs[0];
+        const studentData = studentDoc.data();
+
+        // Determine attendance status
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+
+        let currentStatus = "";
+        let updateData = {};
+
+        if (minutes < 570) {
+          currentStatus = "Sign-In";
+          updateData = { signIn: serverTimestamp() };
+        } else if (minutes >= 960) {
+          currentStatus = "Sign-Out";
+          updateData = { signOut: serverTimestamp() };
         } else {
-          currentStatus = "Break In";
-          updateData = { breaks: arrayUnion({ type: "in", time: serverTimestamp() }) };
+          if (!studentData.breaks) studentData.breaks = [];
+          const lastBreak = studentData.breaks[studentData.breaks.length - 1];
+          if (!lastBreak || lastBreak.type === "in") {
+            currentStatus = "Break Out";
+            updateData = { breaks: arrayUnion({ type: "out", time: serverTimestamp() }) };
+          } else {
+            currentStatus = "Break In";
+            updateData = { breaks: arrayUnion({ type: "in", time: serverTimestamp() }) };
+          }
         }
+
+        await updateDoc(doc(db, "users", studentDoc.id), updateData);
+
+        newEntry = {
+          ...studentData,
+          status: currentStatus,
+          time: now.toLocaleTimeString(),
+        };
       }
 
-      await updateDoc(doc(db, "users", studentDoc.id), updateData);
-
-      // Add to history
-      setHistory((prev) => [
-        { ...studentData, status: currentStatus, time: now.toLocaleTimeString() },
-        ...prev,
-      ]);
+      // Add entry to history (found or not)
+      setHistory(prev => [newEntry, ...prev]);
 
     } catch (err) {
       console.error("Scan error:", err);
@@ -84,18 +93,13 @@ const AttendanceScanner = () => {
 
   const startScanner = async () => {
     if (scannerRef.current) return;
-
     const scanner = new Html5Qrcode("qr-reader");
     scannerRef.current = scanner;
 
     try {
       await scanner.start(
         { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: Math.min(window.innerWidth * 0.8, 300), height: Math.min(window.innerWidth * 0.8, 300) },
-          disableFlip: false,
-        },
+        { fps: 10, qrbox: { width: Math.min(window.innerWidth * 0.8, 300), height: Math.min(window.innerWidth * 0.8, 300) }, disableFlip: false },
         handleScanSuccess
       );
     } catch (err) {
@@ -106,7 +110,6 @@ const AttendanceScanner = () => {
 
   const stopScanner = async () => {
     if (!scannerRef.current) return;
-
     try {
       const state = scannerRef.current.getState();
       if (state === "STOPPED") return;
@@ -120,41 +123,14 @@ const AttendanceScanner = () => {
 
   return (
     <div style={{ textAlign: "center", padding: 10 }}>
-      {/* Camera */}
       <div
         id="qr-reader"
-        style={{
-          width: "90vw",
-          maxWidth: 360,
-          height: "90vw",
-          maxHeight: 360,
-          margin: "0 auto",
-          border: "2px solid #ccc",
-          borderRadius: 10,
-        }}
+        style={{ width: "90vw", maxWidth: 360, height: "90vw", maxHeight: 360, margin: "0 auto", border: "2px solid #ccc", borderRadius: 10 }}
       ></div>
 
-      {/* Notification */}
-      {notification && (
-        <div style={{ marginTop: 10, color: "red", fontWeight: "bold" }}>
-          {notification}
-        </div>
-      )}
-
-      {/* History list */}
       <div style={{ marginTop: 20, maxHeight: 300, overflowY: "auto" }}>
         {history.map((item, index) => (
-          <div
-            key={index}
-            style={{
-              marginBottom: 10,
-              padding: 10,
-              borderRadius: 10,
-              backgroundColor: "#f5f5f5",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              textAlign: "left",
-            }}
-          >
+          <div key={index} style={{ marginBottom: 10, padding: 10, borderRadius: 10, backgroundColor: "#f5f5f5", boxShadow: "0 2px 4px rgba(0,0,0,0.1)", textAlign: "left" }}>
             <p style={{ margin: 0, fontWeight: "bold" }}>{item.participantName}</p>
             <p style={{ margin: 0 }}>ID: {item.generatedId}</p>
             <p style={{ margin: 0 }}>Status: {item.status}</p>
