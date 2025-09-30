@@ -25,20 +25,22 @@ const AttendanceScanner = () => {
   const handleScanSuccess = async (decodedText) => {
     if (!decodedText) return;
 
-    // Normalize QR string
-    const scannedId = decodedText.replace(/\s/g, '').trim().toLowerCase();
+    const scannedId = decodedText.replace(/\s/g, "").trim().toLowerCase();
 
-    // Avoid duplicate scan
+    // Avoid scanning same ID twice in a row
     if (scannedId === lastScannedRef.current) return;
     lastScannedRef.current = scannedId;
 
     try {
-      const q = query(collection(db, "users"), where("generatedIdLowercase", "==", scannedId));
+      // Adjust field name based on your Firestore document
+      const q = query(
+        collection(db, "users"),
+        where("generatedIdLowercase", "==", scannedId) // Make sure this field exists in Firebase
+      );
       const querySnap = await getDocs(q);
 
       let newEntry;
       if (querySnap.empty) {
-        // User not found
         newEntry = {
           participantName: "User not found",
           generatedId: scannedId,
@@ -82,9 +84,7 @@ const AttendanceScanner = () => {
         };
       }
 
-      // Add entry to history
-      setHistory(prev => [newEntry, ...prev]);
-
+      setHistory((prev) => [newEntry, ...prev]);
     } catch (err) {
       console.error("Scan error:", err);
     }
@@ -101,7 +101,7 @@ const AttendanceScanner = () => {
         { facingMode: "environment" },
         {
           fps: 10,
-          qrbox: { width: Math.min(window.innerWidth * 0.8, 300), height: Math.min(window.innerWidth * 0.8, 300) },
+          qrbox: 300, // fixed square box
           disableFlip: false,
         },
         handleScanSuccess
@@ -133,16 +133,14 @@ const AttendanceScanner = () => {
         style={{
           width: "90vw",
           maxWidth: 360,
-          height: "90vw",
-          maxHeight: 360,
+          height: 360, // fixed height to prevent overlay
           border: "2px solid #ccc",
           borderRadius: 10,
-          zIndex: 1,
         }}
       ></div>
 
       {/* Table of scanned users */}
-      <div style={{ marginTop: 20, width: "95%", maxWidth: 400, maxHeight: 300, overflowY: "auto", zIndex: 2 }}>
+      <div style={{ marginTop: 20, width: "95%", maxWidth: 400, maxHeight: 300, overflowY: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ backgroundColor: "#eee" }}>
@@ -154,7 +152,7 @@ const AttendanceScanner = () => {
           </thead>
           <tbody>
             {history.map((item, index) => (
-              <tr key={index} style={{ backgroundColor: index === 0 ? "#d4edda" : "white" }}> {/* Highlight latest scan */}
+              <tr key={index} style={{ backgroundColor: index === 0 ? "#d4edda" : "white" }}>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.participantName}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.generatedId}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.status}</td>
@@ -169,4 +167,3 @@ const AttendanceScanner = () => {
 };
 
 export default AttendanceScanner;
-      
