@@ -25,8 +25,10 @@ const AttendanceScanner = () => {
   const handleScanSuccess = async (decodedText) => {
     if (!decodedText) return;
 
+    // Normalize QR string
     const scannedId = decodedText.replace(/\s/g, '').trim().toLowerCase();
 
+    // Avoid duplicate scan
     if (scannedId === lastScannedRef.current) return;
     lastScannedRef.current = scannedId;
 
@@ -36,6 +38,7 @@ const AttendanceScanner = () => {
 
       let newEntry;
       if (querySnap.empty) {
+        // User not found
         newEntry = {
           participantName: "User not found",
           generatedId: scannedId,
@@ -79,6 +82,7 @@ const AttendanceScanner = () => {
         };
       }
 
+      // Add entry to history
       setHistory(prev => [newEntry, ...prev]);
 
     } catch (err) {
@@ -95,7 +99,11 @@ const AttendanceScanner = () => {
     try {
       await scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: Math.min(window.innerWidth * 0.8, 300), height: Math.min(window.innerWidth * 0.8, 300) }, disableFlip: false },
+        {
+          fps: 10,
+          qrbox: { width: Math.min(window.innerWidth * 0.8, 300), height: Math.min(window.innerWidth * 0.8, 300) },
+          disableFlip: false,
+        },
         handleScanSuccess
       );
     } catch (err) {
@@ -118,15 +126,23 @@ const AttendanceScanner = () => {
   };
 
   return (
-    <div style={{ textAlign: "center", padding: 10 }}>
+    <div style={{ textAlign: "center", padding: 10, display: "flex", flexDirection: "column", alignItems: "center" }}>
       {/* Camera */}
       <div
         id="qr-reader"
-        style={{ width: "90vw", maxWidth: 360, height: "90vw", maxHeight: 360, margin: "0 auto", border: "2px solid #ccc", borderRadius: 10 }}
+        style={{
+          width: "90vw",
+          maxWidth: 360,
+          height: "90vw",
+          maxHeight: 360,
+          border: "2px solid #ccc",
+          borderRadius: 10,
+          zIndex: 1,
+        }}
       ></div>
 
       {/* Table of scanned users */}
-      <div style={{ marginTop: 20, maxHeight: 300, overflowY: "auto" }}>
+      <div style={{ marginTop: 20, width: "95%", maxWidth: 400, maxHeight: 300, overflowY: "auto", zIndex: 2 }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ backgroundColor: "#eee" }}>
@@ -138,7 +154,7 @@ const AttendanceScanner = () => {
           </thead>
           <tbody>
             {history.map((item, index) => (
-              <tr key={index} style={{ backgroundColor: index === 0 ? "#d4edda" : "white" }}> {/* Highlight latest */}
+              <tr key={index} style={{ backgroundColor: index === 0 ? "#d4edda" : "white" }}> {/* Highlight latest scan */}
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.participantName}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.generatedId}</td>
                 <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.status}</td>
