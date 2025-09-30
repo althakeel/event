@@ -53,16 +53,37 @@ const AdminDashboard = () => {
   const presentNames = attendanceData.filter(a => a.status === "Present").map(a => a.studentName).join(", ") || "-";
   const absentNames = attendanceData.filter(a => a.status === "Absent").map(a => a.studentName).join(", ") || "-";
 
-  // Weekly login chart (dummy example)
+  // Weekly attendance chart
+  const getLast7Days = () => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().split("T")[0];
+    });
+  };
+
+  const weekDates = getLast7Days();
+
+  const weeklyAttendance = weekDates.map(date => ({
+    students: attendanceData.filter(a => a.date === date && a.role === "student" && a.status === "Present").length,
+    team: attendanceData.filter(a => a.date === date && a.role === "team" && a.status === "Present").length,
+  }));
+
   const chartData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels: weekDates.map(d => new Date(d).toLocaleDateString("en-US", { weekday: "short" })),
     datasets: [
       {
-        label: "Logins",
-        data: [12, 19, 14, 17, 22, 15, 20], // You can calculate weekly login from Firebase
+        label: "Students Present",
+        data: weeklyAttendance.map(w => w.students),
         backgroundColor: "#2980b9",
         borderRadius: 6,
-      }
+      },
+      {
+        label: "Team Present",
+        data: weeklyAttendance.map(w => w.team),
+        backgroundColor: "#27ae60",
+        borderRadius: 6,
+      },
     ]
   };
 
@@ -71,7 +92,7 @@ const AdminDashboard = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: "Weekly Login Activity", font: { size: 18 } }
+      title: { display: true, text: "Weekly Attendance", font: { size: 18 } }
     },
     scales: { y: { beginAtZero: true } }
   };
