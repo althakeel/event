@@ -13,29 +13,38 @@ import {
 import { db } from "../firebase";
 
 const AttendanceScanner = () => {
-  const [history, setHistory] = useState([]); // Array of scanned students
+  const [history, setHistory] = useState([]); // Scanned users history
+  const [notification, setNotification] = useState(""); // For "User not found"
   const scannerRef = useRef(null);
   const lastScannedRef = useRef("");
 
   useEffect(() => {
-    startScanner(); // Auto-start camera
-    return () => stopScanner(); // Cleanup
+    startScanner();
+    return () => stopScanner();
   }, []);
 
   const handleScanSuccess = async (decodedText) => {
     if (!decodedText) return;
     const trimmedData = decodedText.trim();
-    if (trimmedData === lastScannedRef.current) return; // Avoid duplicate scan in a row
+
+    if (trimmedData === lastScannedRef.current) return; // prevent duplicate scan
     lastScannedRef.current = trimmedData;
 
     try {
       const q = query(collection(db, "users"), where("generatedId", "==", trimmedData));
       const querySnap = await getDocs(q);
-      if (querySnap.empty) return;
+
+      if (querySnap.empty) {
+        // User not found
+        setNotification(`User with ID "${trimmedData}" not found`);
+        setTimeout(() => setNotification(""), 3000); // hide after 3 sec
+        return;
+      }
 
       const studentDoc = querySnap.docs[0];
       const studentData = studentDoc.data();
 
+      // Determine attendance status
       const now = new Date();
       const minutes = now.getHours() * 60 + now.getMinutes();
 
@@ -62,10 +71,10 @@ const AttendanceScanner = () => {
 
       await updateDoc(doc(db, "users", studentDoc.id), updateData);
 
-      // Add to history with timestamp
-      setHistory(prev => [
-        { ...studentData, status: currentStatus, time: new Date().toLocaleTimeString() },
-        ...prev
+      // Add to history
+      setHistory((prev) => [
+        { ...studentData, status: currentStatus, time: now.toLocaleTimeString() },
+        ...prev,
       ]);
 
     } catch (err) {
@@ -124,6 +133,13 @@ const AttendanceScanner = () => {
           borderRadius: 10,
         }}
       ></div>
+
+      {/* Notification */}
+      {notification && (
+        <div style={{ marginTop: 10, color: "red", fontWeight: "bold" }}>
+          {notification}
+        </div>
+      )}
 
       {/* History list */}
       <div style={{ marginTop: 20, maxHeight: 300, overflowY: "auto" }}>
