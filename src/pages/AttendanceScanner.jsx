@@ -13,7 +13,7 @@ import {
 import { db } from "../firebase";
 
 const AttendanceScanner = () => {
-  const [history, setHistory] = useState([]); // All scanned users (found or not)
+  const [history, setHistory] = useState([]); // All scanned users
   const scannerRef = useRef(null);
   const lastScannedRef = useRef("");
 
@@ -25,10 +25,8 @@ const AttendanceScanner = () => {
   const handleScanSuccess = async (decodedText) => {
     if (!decodedText) return;
 
-    // Normalize QR string
     const scannedId = decodedText.replace(/\s/g, '').trim().toLowerCase();
 
-    // Avoid scanning the same ID twice in a row
     if (scannedId === lastScannedRef.current) return;
     lastScannedRef.current = scannedId;
 
@@ -38,7 +36,6 @@ const AttendanceScanner = () => {
 
       let newEntry;
       if (querySnap.empty) {
-        // User not found
         newEntry = {
           participantName: "User not found",
           generatedId: scannedId,
@@ -49,7 +46,6 @@ const AttendanceScanner = () => {
         const studentDoc = querySnap.docs[0];
         const studentData = studentDoc.data();
 
-        // Determine attendance status
         const now = new Date();
         const minutes = now.getHours() * 60 + now.getMinutes();
 
@@ -83,7 +79,6 @@ const AttendanceScanner = () => {
         };
       }
 
-      // Add entry to history (found or not)
       setHistory(prev => [newEntry, ...prev]);
 
     } catch (err) {
@@ -93,6 +88,7 @@ const AttendanceScanner = () => {
 
   const startScanner = async () => {
     if (scannerRef.current) return;
+
     const scanner = new Html5Qrcode("qr-reader");
     scannerRef.current = scanner;
 
@@ -123,20 +119,34 @@ const AttendanceScanner = () => {
 
   return (
     <div style={{ textAlign: "center", padding: 10 }}>
+      {/* Camera */}
       <div
         id="qr-reader"
         style={{ width: "90vw", maxWidth: 360, height: "90vw", maxHeight: 360, margin: "0 auto", border: "2px solid #ccc", borderRadius: 10 }}
       ></div>
 
+      {/* Table of scanned users */}
       <div style={{ marginTop: 20, maxHeight: 300, overflowY: "auto" }}>
-        {history.map((item, index) => (
-          <div key={index} style={{ marginBottom: 10, padding: 10, borderRadius: 10, backgroundColor: "#f5f5f5", boxShadow: "0 2px 4px rgba(0,0,0,0.1)", textAlign: "left" }}>
-            <p style={{ margin: 0, fontWeight: "bold" }}>{item.participantName}</p>
-            <p style={{ margin: 0 }}>ID: {item.generatedId}</p>
-            <p style={{ margin: 0 }}>Status: {item.status}</p>
-            <p style={{ margin: 0, fontSize: 12, color: "#555" }}>{item.time}</p>
-          </div>
-        ))}
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ backgroundColor: "#eee" }}>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>Name</th>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>ID</th>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>Status</th>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((item, index) => (
+              <tr key={index} style={{ backgroundColor: index === 0 ? "#d4edda" : "white" }}> {/* Highlight latest */}
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.participantName}</td>
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.generatedId}</td>
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.status}</td>
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>{item.time}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
