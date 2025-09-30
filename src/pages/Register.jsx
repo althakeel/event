@@ -124,47 +124,18 @@ const Register = () => {
   };
 
   return (
-    <div
-      style={{
-        fontFamily: "'Poppins', sans-serif",
-        background: "linear-gradient(to bottom, #fdfcfb, #f4ede2)",
-        padding: 20,
-        width: "100%",
-      }}
-    >
-      {/* Floating Login Button */}
-      <div style={{ position: "fixed", top: 20, right: 20, zIndex: 999 }}>
-        <button
-          onClick={() => navigate("/volunteer-register")}
-          style={{
-            padding: "8px 16px",
-            fontSize: 14,
-            fontWeight: "600",
-            backgroundColor: "#2980b9",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-          }}
-        >
+    <div style={styles.container}>
+      {/* Floating Volunteer Button */}
+      <div style={styles.floatingButton}>
+        <button onClick={() => navigate("/volunteer-register")} style={styles.button}>
           Register Volunteer
         </button>
       </div>
 
       <Header />
 
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 10px" }}>
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            maxWidth: 850,
-            margin: "0 auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: 25,
-          }}
-        >
+      <div style={styles.formWrapper}>
+        <form onSubmit={handleSubmit} style={styles.form}>
           {/* Participant Info */}
           <Card title="👦 Participant Information">
             <Input
@@ -191,7 +162,8 @@ const Register = () => {
                 readOnly
               />
             </Row>
-<CategoryDisplay age={formData.age} category={formData.category} />          </Card>
+            <CategoryDisplay age={formData.age} category={formData.category} />
+          </Card>
 
           {/* Parent Info */}
           <Card title="👨‍👩‍👧 Parent Information">
@@ -267,7 +239,7 @@ const Register = () => {
             <p style={{ fontSize: 14, marginBottom: 10 }}>
               Please indicate any conditions (check all that apply):
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 15, marginBottom: 15 }}>
+            <div style={styles.checkboxGroup}>
               {["N/A", "Asthma", "Diabetes", "Allergies", "Epilepsy", "Other"].map(
                 (cond) => (
                   <label key={cond} style={{ fontSize: 14 }}>
@@ -289,28 +261,19 @@ const Register = () => {
                 onChange={handleChange}
               />
             )}
-            <label style={{ fontWeight: "600", display: "block", marginBottom: 6, fontSize: 14 }}>
-              Additional Medical Notes
-            </label>
+            <label style={styles.label}>Additional Medical Notes</label>
             <textarea
               name="medicalNotes"
               value={formData.medicalNotes}
               onChange={handleChange}
               placeholder="Write N/A if none"
-              style={{
-                width: "100%",
-                padding: 10,
-                borderRadius: 8,
-                border: "1px solid #ddd",
-                fontSize: 14,
-                minHeight: 80,
-              }}
+              style={styles.textarea}
             />
           </Card>
 
           {/* Agreement */}
           <Card title="🙏 Parent Agreement">
-            <label style={{ fontSize: 14, display: "block", marginBottom: 12 }}>
+            <label style={styles.label}>
               <input
                 type="checkbox"
                 name="parentAgreement"
@@ -330,21 +293,7 @@ const Register = () => {
 
           <ImportantNotes />
 
-          <button
-            type="submit"
-            style={{
-              width: "100%",
-              padding: 14,
-              fontSize: 15,
-              fontWeight: "600",
-              backgroundColor: "#6c3483",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-              marginTop: 10,
-            }}
-          >
+          <button type="submit" style={styles.submitButton}>
             ✨ Submit Registration
           </button>
         </form>
@@ -353,84 +302,174 @@ const Register = () => {
   );
 };
 
-/* ---------------- Helper Components ---------------- */
+/* ---------------- Styles ---------------- */
+const styles = {
+  container: {
+    fontFamily: "'Poppins', sans-serif",
+    background: "linear-gradient(to bottom, #fdfcfb, #f4ede2)",
+    padding: 10,
+    width: "100%",
+    boxSizing: "border-box",
+  },
+  floatingButton: {
+    position: "fixed",
+    top: 10,
+    right: 10,
+    zIndex: 999,
+  },
+  button: {
+    padding: "8px 16px",
+    fontSize: 14,
+    fontWeight: 600,
+    backgroundColor: "#2980b9",
+    color: "#fff",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+  },
+  formWrapper: {
+    maxWidth: 1000,
+    margin: "0 auto",
+    padding: "0 10px",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+    width: "100%",
+  },
+  checkboxGroup: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 10,
+  },
+  label: {
+    fontWeight: 600,
+    display: "block",
+    marginBottom: 6,
+    fontSize: 14,
+  },
+  textarea: {
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+    fontSize: 14,
+    minHeight: 80,
+    boxSizing: "border-box",
+  },
+  submitButton: {
+    width: "100%",
+    padding: 14,
+    fontSize: 15,
+    fontWeight: 600,
+    backgroundColor: "#6c3483",
+    color: "#fff",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+    marginTop: 10,
+  },
+};
 
+/* ---------------- Helper Components ---------------- */
 const Header = () => (
-  <div
-    style={{
-      width: "100%",
-      background: "rgba(255,255,255,0.9)",
-      borderTop: "6px solid #6c3483",
-      boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-      marginBottom: 35,
-    }}
-  >
-    <div
-      style={{
-        maxWidth: 1000,
-        margin: "0 auto",
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: 20,
-        borderRadius: 12,
-      }}
-    >
-      <div style={{ textAlign: "center", flex: "1 1 150px" }}>
-        <img src={Logo2} alt="Logo2" style={{ maxWidth: 120, marginBottom: 5 }} />
-        <img src={Logo3} alt="Logo3" style={{ maxWidth: 120 }} />
+  <div style={headerStyles.container}>
+    <div style={headerStyles.wrapper}>
+      <div style={headerStyles.logoGroup}>
+        <img src={Logo2} alt="Logo2" style={headerStyles.logo} />
+        <img src={Logo3} alt="Logo3" style={headerStyles.logo} />
       </div>
-      <div style={{ flex: "2 1 300px", textAlign: "center" }}>
-        <h2 style={{ margin: 0, fontSize: 20, color: "#2c3e50", textTransform: "uppercase" }}>
-          Malayalee Catholic Community
-        </h2>
-        <h3 style={{ margin: "5px 0", fontSize: 16, color: "#555" }}>
-          St. Mary’s Church, Dubai
-        </h3>
-        <p style={{ margin: "5px 0", fontSize: 13, color: "#666" }}>
-          P.O. BOX: 51200, Dubai, U.A.E
-        </p>
-        <h1 style={{ marginTop: 15, fontSize: 22, color: "#8b0000", fontWeight: "bold" }}>
-          Christ Experience
-        </h1>
-        <h2 style={{ margin: "8px 0", fontSize: 18, color: "#6c3483" }}>
-          Christeen Retreat 2025
-        </h2>
-        <p style={{ fontSize: 13, fontStyle: "italic" }}>By Marian Ministry</p>
-        <p style={{ fontSize: 13, marginTop: 5 }}>(December 20th to 25th)</p>
+      <div style={headerStyles.textGroup}>
+        <h2 style={headerStyles.title}>Malayalee Catholic Community</h2>
+        <h3 style={headerStyles.subtitle}>St. Mary’s Church, Dubai</h3>
+        <p style={headerStyles.text}>P.O. BOX: 51200, Dubai, U.A.E</p>
+        <h1 style={headerStyles.mainTitle}>Christ Experience</h1>
+        <h2 style={headerStyles.subTitle}>Christeen Retreat 2025</h2>
+        <p style={headerStyles.textItalic}>By Marian Ministry</p>
+        <p style={headerStyles.text}>(December 20th to 25th)</p>
       </div>
-      <div style={{ textAlign: "center", flex: "1 1 150px" }}>
-        <img src={Logo} alt="Logo" style={{ maxWidth: 130 }} />
+      <div style={headerStyles.logoGroup}>
+        <img src={Logo} alt="Logo" style={headerStyles.logo} />
       </div>
     </div>
   </div>
 );
 
+const headerStyles = {
+  container: {
+    width: "100%",
+    background: "rgba(255,255,255,0.9)",
+    borderTop: "6px solid #6c3483",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    marginBottom: 20,
+  },
+  wrapper: {
+    maxWidth: 1000,
+    margin: "0 auto",
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    boxSizing: "border-box",
+  },
+  logoGroup: {
+    flex: "1 1 100%",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  logo: {
+    maxWidth: 100,
+    margin: "5px",
+  },
+  textGroup: {
+    flex: "1 1 100%",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  title: {
+    margin: 0,
+    fontSize: 18,
+    color: "#2c3e50",
+    textTransform: "uppercase",
+  },
+  subtitle: {
+    margin: "5px 0",
+    fontSize: 14,
+    color: "#555",
+  },
+  text: {
+    margin: "5px 0",
+    fontSize: 12,
+    color: "#666",
+  },
+  mainTitle: {
+    marginTop: 5,
+    fontSize: 18,
+    color: "#8b0000",
+    fontWeight: "bold",
+  },
+  subTitle: {
+    margin: "5px 0",
+    fontSize: 16,
+    color: "#6c3483",
+  },
+  textItalic: {
+    fontSize: 12,
+    fontStyle: "italic",
+    margin: "0 0 5px 0",
+  },
+};
+
 const Row = ({ children }) => (
-  <div
-    style={{
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 20,            // horizontal gap between inputs
-      marginBottom: 20,    // vertical gap after row
-    }}
-  >
-    {children}
-  </div>
+  <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>{children}</div>
 );
 
-
 const Input = ({ label, type = "text", ...props }) => (
-  <div style={{ flex: 1, minWidth: 250, marginBottom: 10 }}> {/* vertical gap */}
-    <label
-      style={{
-        fontWeight: "600",
-        marginBottom: 6,
-        display: "block",
-        fontSize: 14,
-      }}
-    >
+  <div style={{ flex: 1, minWidth: "100%", marginBottom: 10 }}>
+    <label style={{ fontWeight: 600, marginBottom: 6, display: "block", fontSize: 14 }}>
       {label}
     </label>
     <input
@@ -444,47 +483,47 @@ const Input = ({ label, type = "text", ...props }) => (
         fontSize: 14,
         boxSizing: "border-box",
       }}
-      onFocus={(e) => (e.target.style.border = "1px solid #6c3483")}
-      onBlur={(e) => (e.target.style.border = "1px solid #ddd")}
     />
   </div>
 );
 
 const CategoryDisplay = ({ age, category }) => (
-  <div style={{ marginTop: 15 }}>
-    <label
+  <div style={{ marginTop: 10 }}>
+    <label style={{ fontWeight: 600, marginBottom: 6, display: "block", fontSize: 14 }}>
+      Category
+    </label>
+    <div
       style={{
-        fontWeight: "600",
-        marginBottom: 6,
-        display: "block",
         fontSize: 14,
+        padding: 8,
+        border: "1px solid #ddd",
+        borderRadius: 8,
+        background: "#f8f8f8",
+        width: "100%",
+        maxWidth: 220,
       }}
     >
-      Category 
-    </label>
-    <div style={{ fontSize: 14, padding: 8, border: "1px solid #ddd", borderRadius: 8, background: "#f8f8f8", width: 200 }}>
-      {age
-        ? `${category} (${category === "Junior" ? "8–12" : "13–18"})`
-        : "Enter Date of Birth to see category"}
+      {age ? `${category} (${category === "Junior" ? "8–12" : "13–18"})` : "Enter Date of Birth to see category"}
     </div>
   </div>
 );
-
 
 const Card = ({ title, children }) => (
   <div
     style={{
       background: "#fff",
-      padding: 20,
-      marginBottom: 25,
+      padding: 15,
+      marginBottom: 20,
       borderRadius: 12,
       boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
       borderLeft: "4px solid #6c3483",
+      width: "100%",
+      boxSizing: "border-box",
     }}
   >
     <h3
       style={{
-        marginBottom: 15,
+        marginBottom: 10,
         fontSize: 16,
         color: "#6c3483",
         borderBottom: "1px solid #eee",
@@ -494,28 +533,6 @@ const Card = ({ title, children }) => (
       {title}
     </h3>
     {children}
-  </div>
-);
-
-const CategoryRadio = ({ formData, handleChange }) => (
-  <div style={{ marginTop: 15 }}>
-    <label style={{ fontWeight: "600", marginBottom: 6, display: "block", fontSize: 14 }}>
-      Category
-    </label>
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
-      {["Junior", "Senior"].map((cat) => (
-        <label key={cat} style={{ fontSize: 14 }}>
-          <input
-            type="radio"
-            name="category"
-            value={cat}
-            checked={formData.category === cat}
-            onChange={handleChange}
-          />{" "}
-          {cat} {cat === "Junior" ? "(8–12)" : "(13–18)"}
-        </label>
-      ))}
-    </div>
   </div>
 );
 
@@ -539,6 +556,5 @@ const ImportantNotes = () => (
     </ul>
   </Card>
 );
-
 
 export default Register;
