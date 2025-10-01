@@ -93,35 +93,46 @@ const Register = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, orderBy("createdAt", "desc"), limit(1));
-      const snap = await getDocs(q);
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-      let lastNumber = 0;
-      snap.forEach((doc) => {
-        const lastId = doc.data()?.studentId;
-        if (lastId) lastNumber = parseInt(lastId.replace("STU-", "")) || 0;
-      });
+  // Validation for medical info
+  if (formData.medicalConditions.length === 0) {
+    alert("❌ Please select at least one medical condition.");
+    return;
+  }
+  if (!formData.medicalNotes.trim()) {
+    alert("❌ Please provide medical notes (write N/A if none).");
+    return;
+  }
 
-      const newStudentId = `STU-${String(lastNumber + 1).padStart(3, "0")}`;
-      const dataToSave = {
-        ...formData,
-        studentId: newStudentId,
-        createdAt: new Date(),
-      };
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, orderBy("createdAt", "desc"), limit(1));
+    const snap = await getDocs(q);
 
-      const docRef = await addDoc(usersRef, dataToSave);
-      const dataWithId = { ...dataToSave, docId: docRef.id };
+    let lastNumber = 0;
+    snap.forEach((doc) => {
+      const lastId = doc.data()?.studentId;
+      if (lastId) lastNumber = parseInt(lastId.replace("STU-", "")) || 0;
+    });
 
-      navigate("/id-card", { state: { formData: dataWithId } });
-    } catch (err) {
-      console.error("Error submitting registration:", err);
-      alert("❌ Failed to submit registration. Please try again.");
-    }
-  };
+    const newStudentId = `STU-${String(lastNumber + 1).padStart(3, "0")}`;
+    const dataToSave = {
+      ...formData,
+      studentId: newStudentId,
+      createdAt: new Date(),
+    };
+
+    const docRef = await addDoc(usersRef, dataToSave);
+    const dataWithId = { ...dataToSave, docId: docRef.id };
+
+    navigate("/id-card", { state: { formData: dataWithId } });
+  } catch (err) {
+    console.error("Error submitting registration:", err);
+    alert("❌ Failed to submit registration. Please try again.");
+  }
+};
 
   return (
     <div style={styles.container}>
