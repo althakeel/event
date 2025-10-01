@@ -132,7 +132,7 @@ const handleSubmit = async (e) => {
     console.error("Error submitting registration:", err);
     alert("❌ Failed to submit registration. Please try again.");
   }
-};
+}; 
 
   return (
     <div style={styles.container}>
